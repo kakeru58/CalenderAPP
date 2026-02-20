@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
 import nodemailer from 'nodemailer';
+import { DateTime } from 'luxon';
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
@@ -198,81 +199,57 @@ async function getCalendarClient() {
 }
 
 function buildSlots({ start, end, busy, slotMinutes }) {
+  const intervals = buildFreeIntervals({ start, end, busy });
   const slots = [];
-  const busyRanges = busy
-    .map((b) => ({ start: new Date(b.start), end: new Date(b.end) }))
-    .filter((b) => !Number.isNaN(b.start.getTime()) && !Number.isNaN(b.end.getTime()))
-    .sort((a, b) => a.start - b.start);
+  for (const interval of intervals) {
+    const intervalStart = DateTime.fromISO(interval.start, { zone: 'utc' });
+    const intervalEnd = DateTime.fromISO(interval.end, { zone: 'utc' });
+    let cursor = intervalStart;
 
-  const mergedBusy = [];
-  for (const range of busyRanges) {
-    if (!mergedBusy.length || range.start > mergedBusy[mergedBusy.length - 1].end) {
-      mergedBusy.push({ ...range });
-      continue;
+    while (cursor.plus({ minutes: slotMinutes }) <= intervalEnd) {
+      const slotEnd = cursor.plus({ minutes: slotMinutes });
+      slots.push({
+        start: cursor.toUTC().toISO(),
+        end: slotEnd.toUTC().toISO()
+      });
+      cursor = slotEnd;
     }
-    const last = mergedBusy[mergedBusy.length - 1];
-    if (range.end > last.end) last.end = range.end;
   }
-
-  let cursor = new Date(start);
-  while (cursor < end) {
-    const dayOfWeek = cursor.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      cursor.setDate(cursor.getDate() + 1);
-      cursor.setHours(0, 0, 0, 0);
-      continue;
-    }
-
-    const dayStart = new Date(cursor);
-    dayStart.setHours(workStartHour, 0, 0, 0);
-
-    const dayEnd = new Date(cursor);
-    dayEnd.setHours(workEndHour, 0, 0, 0);
-
-    const scanStart = dayStart > start ? dayStart : new Date(start);
-    const scanEnd = dayEnd < end ? dayEnd : new Date(end);
-
-    if (scanStart < scanEnd) {
-      let slotStart = new Date(scanStart);
-      while (slotStart < scanEnd) {
-        const slotEnd = new Date(slotStart.getTime() + slotMinutes * 60_000);
-        if (slotEnd > scanEnd) break;
-
-        const overlaps = mergedBusy.some((b) => b.start < slotEnd && b.end > slotStart);
-        if (!overlaps) {
-          slots.push({ start: slotStart.toISOString(), end: slotEnd.toISOString() });
-        }
-        slotStart = slotEnd;
-      }
-    }
-
-    cursor.setDate(cursor.getDate() + 1);
-    cursor.setHours(0, 0, 0, 0);
-  }
-
   return slots;
 }
 
 function buildFreeIntervals({ start, end, busy }) {
+  const startZoned = DateTime.fromJSDate(start, { zone: timezone });
+  const endZoned = DateTime.fromJSDate(end, { zone: timezone });
+  if (endZoned <= startZoned) return [];
+
   const intervals = [];
   const busyRanges = busy
-    .map((b) => ({ start: new Date(b.start), end: new Date(b.end) }))
-    .filter((b) => !Number.isNaN(b.start.getTime()) && !Number.isNaN(b.end.getTime()))
-    .sort((a, b) => a.start - b.start);
+    .map((b) => ({
+      start: DateTime.fromISO(b.start, { zone: 'utc' }).setZone(timezone),
+      end: DateTime.fromISO(b.end, { zone: 'utc' }).setZone(timezone)
+    }))
+    .filter((b) => b.start.isValid && b.end.isValid && b.end > b.start)
+    .sort((a, b) => a.start.toMillis() - b.start.toMillis());
 
-  let cursorDay = new Date(start);
-  cursorDay.setHours(0, 0, 0, 0);
+  let cursorDay = startZoned.startOf('day');
+  while (cursorDay < endZoned) {
+    if (cursorDay.weekday <= 5) {
+      const dayStart = cursorDay.set({
+        hour: workStartHour,
+        minute: 0,
+        second: 0,
+        millisecond: 0
+      });
+      const dayEnd = cursorDay.set({
+        hour: workEndHour,
+        minute: 0,
+        second: 0,
+        millisecond: 0
+      });
 
-  while (cursorDay < end) {
-    const dayOfWeek = cursorDay.getDay();
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      const dayStart = new Date(cursorDay);
-      dayStart.setHours(workStartHour, 0, 0, 0);
-      const dayEnd = new Date(cursorDay);
-      dayEnd.setHours(workEndHour, 0, 0, 0);
-
-      const windowStart = dayStart > start ? dayStart : new Date(start);
-      const windowEnd = dayEnd < end ? dayEnd : new Date(end);
+      const windowStart = dayStart > startZoned ? dayStart : startZoned;
+      const windowEnd = dayEnd < endZoned ? dayEnd : endZoned;
 
       if (windowStart < windowEnd) {
         const overlappedBusy = busyRanges
@@ -281,31 +258,30 @@ function buildFreeIntervals({ start, end, busy }) {
             end: r.end < windowEnd ? r.end : windowEnd
           }))
           .filter((r) => r.start < r.end)
-          .sort((a, b) => a.start - b.start);
+          .sort((a, b) => a.start.toMillis() - b.start.toMillis());
 
-        let freeCursor = new Date(windowStart);
+        let freeCursor = windowStart;
         for (const range of overlappedBusy) {
           if (range.start > freeCursor) {
             intervals.push({
-              start: freeCursor.toISOString(),
-              end: range.start.toISOString()
+              start: freeCursor.toUTC().toISO(),
+              end: range.start.toUTC().toISO()
             });
           }
           if (range.end > freeCursor) {
-            freeCursor = new Date(range.end);
+            freeCursor = range.end;
           }
         }
 
         if (freeCursor < windowEnd) {
           intervals.push({
-            start: freeCursor.toISOString(),
-            end: windowEnd.toISOString()
+            start: freeCursor.toUTC().toISO(),
+            end: windowEnd.toUTC().toISO()
           });
         }
       }
     }
-
-    cursorDay.setDate(cursorDay.getDate() + 1);
+    cursorDay = cursorDay.plus({ days: 1 });
   }
 
   return intervals;
