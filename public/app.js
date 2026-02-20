@@ -19,6 +19,7 @@ const noteEl = document.getElementById('note');
 
 const WORK_START_HOUR = 8;
 const WORK_END_HOUR = 18;
+let calendarTimeZone = 'Asia/Tokyo';
 const API_BASE_URL = (globalThis.__APP_CONFIG__?.API_BASE_URL || '').replace(/\/$/, '');
 
 let freeIntervals = [];
@@ -72,6 +73,27 @@ function formatDateLabel(date) {
   });
 }
 
+function getZonedParts(date, timeZone) {
+  const parts = new Intl.DateTimeFormat('ja-JP', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const get = (type) => Number(parts.find((p) => p.type === type)?.value || 0);
+  return {
+    year: get('year'),
+    month: String(get('month')).padStart(2, '0'),
+    day: String(get('day')).padStart(2, '0'),
+    hour: get('hour'),
+    minute: get('minute')
+  };
+}
+
 function getSlotMinutes() {
   if (slotPresetEl.value === 'custom') {
     const v = Number(slotCustomEl.value);
@@ -113,11 +135,13 @@ function getIntervalsByDay() {
   for (const interval of freeIntervals) {
     const start = new Date(interval.start);
     const end = new Date(interval.end);
-    const key = toDayKey(start);
+    const startParts = getZonedParts(start, calendarTimeZone);
+    const endParts = getZonedParts(end, calendarTimeZone);
+    const key = `${startParts.year}-${startParts.month}-${startParts.day}`;
     if (!map.has(key)) map.set(key, []);
 
-    const startMin = start.getHours() * 60 + start.getMinutes();
-    const endMin = end.getHours() * 60 + end.getMinutes();
+    const startMin = startParts.hour * 60 + startParts.minute;
+    const endMin = endParts.hour * 60 + endParts.minute;
     map.get(key).push({ startMin, endMin });
   }
 
@@ -451,6 +475,7 @@ async function loadCalendarView() {
     if (!eventsRes.ok) throw new Error(eventsData.error || '予定の取得に失敗しました');
 
     const eventList = eventsData.events || [];
+    calendarTimeZone = intervalsData.timezone || 'Asia/Tokyo';
     freeIntervals = intervalsData.intervals || [];
     renderTimeGrid();
     renderCalendar(eventList);
