@@ -160,7 +160,7 @@ button.loading {
 .event-lines {
   display: grid;
   gap: 3px;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
