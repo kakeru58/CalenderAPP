@@ -200,6 +200,10 @@ button.loading {
   color: var(--text);
   font-weight: 700;
   padding-right: 6px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
 }
 
 .time-grid-label {
@@ -220,6 +224,7 @@ button.loading {
   border-radius: 6px;
   min-height: 22px;
   background: #f1f2f4;
+  touch-action: none;
 }
 
 .time-cell.hour-start {
@@ -252,12 +257,44 @@ button.loading {
 }
 
 @media (max-width: 820px) {
+  .container {
+    padding: 10px;
+  }
+
+  .panel {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
   .calendar-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .weekday {
     display: none;
+  }
+
+  .time-grid {
+    min-width: 620px;
+  }
+
+  .time-grid-row {
+    grid-template-columns: 92px repeat(var(--cols), minmax(32px, 1fr));
+  }
+
+  .time-cell {
+    min-height: 30px;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }
 

@@ -26,6 +26,7 @@ let freeIntervals = [];
 let selectedCells = new Set();
 let isDragging = false;
 let dragMode = 'select';
+let dragPointerId = null;
 
 function apiUrl(pathWithQuery) {
   if (!API_BASE_URL) return pathWithQuery;
@@ -320,17 +321,19 @@ function renderTimeGrid() {
       cell.disabled = !available;
 
       if (available) {
-        cell.addEventListener('mousedown', (e) => {
+        cell.addEventListener('pointerdown', (e) => {
           e.preventDefault();
           isDragging = true;
+          dragPointerId = e.pointerId;
           dragMode = selectedCells.has(key) ? 'unselect' : 'select';
           applyCellSelection(dayKey, m);
           syncCellSelectedClass(cell);
           renderSelectedSuggestions(slotMinutes);
         });
 
-        cell.addEventListener('mouseenter', () => {
+        cell.addEventListener('pointerenter', (e) => {
           if (!isDragging) return;
+          if (dragPointerId !== null && e.pointerId !== dragPointerId) return;
           applyCellSelection(dayKey, m);
           syncCellSelectedClass(cell);
           renderSelectedSuggestions(slotMinutes);
@@ -347,8 +350,15 @@ function renderTimeGrid() {
   renderSelectedSuggestions(slotMinutes);
 }
 
-document.addEventListener('mouseup', () => {
+document.addEventListener('pointerup', (e) => {
+  if (dragPointerId !== null && e.pointerId !== dragPointerId) return;
   isDragging = false;
+  dragPointerId = null;
+});
+
+document.addEventListener('pointercancel', () => {
+  isDragging = false;
+  dragPointerId = null;
 });
 
 function parseEventBoundary(value, isAllDay) {
