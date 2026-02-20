@@ -17,7 +17,7 @@ body {
     radial-gradient(circle at bottom left, #f4cfac, transparent 35%),
     var(--bg);
   font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .container {
@@ -28,14 +28,14 @@ body {
 }
 
 .panel {
-  width: min(900px, 100%);
+  width: min(1160px, 100%);
   max-width: 100%;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 24px;
   box-shadow: 0 14px 40px rgba(71, 45, 25, 0.12);
-  overflow: hidden;
+  overflow: visible;
 }
 
 h1 { margin: 0 0 8px; }
@@ -90,16 +90,17 @@ button.loading {
   border-top: 1px dashed var(--line);
   padding-top: 12px;
   margin-bottom: 18px;
-  overflow-x: auto;
+  overflow-x: visible;
   max-width: 100%;
-  overscroll-behavior-x: contain;
 }
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, 212px);
   gap: 8px;
-  min-width: 760px;
+  width: 1092px;
+  min-width: 1092px;
+  margin: 0 auto;
 }
 
 .weekday {
@@ -284,11 +285,12 @@ button.loading {
 
   .events-panel {
     padding-bottom: 6px;
-    overflow-x: auto;
+    overflow-x: visible;
   }
 
   .calendar-grid {
-    min-width: 760px;
+    width: 1092px;
+    min-width: 1092px;
   }
 
   .time-grid {
