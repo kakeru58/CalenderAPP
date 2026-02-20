@@ -94,7 +94,7 @@ button.loading {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  min-width: 640px;
+  min-width: 760px;
 }
 
 .weekday {
@@ -107,12 +107,13 @@ button.loading {
 .calendar-cell {
   border: 1px solid var(--line);
   border-radius: 10px;
-  min-height: 84px;
+  height: 112px;
   padding: 8px;
   background: #fff;
   display: grid;
   gap: 6px;
   align-content: start;
+  overflow: hidden;
 }
 
 .calendar-cell.blank {
@@ -152,6 +153,8 @@ button.loading {
 .event-lines {
   display: grid;
   gap: 3px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .event-line {
@@ -272,6 +275,11 @@ button.loading {
 
   .events-panel {
     padding-bottom: 6px;
+    overflow-x: auto;
+  }
+
+  .calendar-grid {
+    min-width: 760px;
   }
 
   .time-grid {
