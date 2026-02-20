@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>山﨑のスケジュール</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="panel">
+      <h1>山﨑のスケジュール</h1>
+      <p class="desc">空き枠と予定をご確認いただき、ご都合のよい候補時間を複数お送りください。</p>
+
+      <form id="filters" class="grid">
+        <label>
+          開始日
+          <input type="date" id="startDate" required />
+        </label>
+        <label>
+          終了日
+          <input type="date" id="endDate" required />
+        </label>
+        <label>
+          候補の単位（分）
+          <select id="slotPreset">
+            <option value="15">15分</option>
+            <option value="20">20分</option>
+            <option value="30" selected>30分</option>
+            <option value="45">45分</option>
+            <option value="60">60分</option>
+            <option value="custom">自由入力</option>
+          </select>
+          <input type="number" id="slotCustom" min="10" max="180" step="5" value="30" hidden />
+        </label>
+      </form>
+
+      <div id="status" class="status"></div>
+      <section class="events-panel">
+        <h2>予定カレンダー</h2>
+        <p class="desc">平日8:00-18:00の予定時間を表示しています。</p>
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </section>
+      <section class="slots-panel">
+        <h2>候補時間の選択</h2>
+        <p class="desc">表示中の空き枠は確定ではなく、必ずしも対応できるとは限りません。恐れ入りますが、ご都合のよい時間を2〜3個以上お選びください。</p>
+        <div id="timeGrid" class="time-grid-wrap"></div>
+        <h3>選択中の候補時間</h3>
+        <div id="selectedSuggestions" class="selected-suggestions"></div>
+        <button type="button" id="clearSelectionsBtn">選択をクリアする</button>
+      </section>
+
+      <form id="proposalForm" class="proposal">
+        <h2>候補時間の送信</h2>
+        <label>
+          お名前
+          <input type="text" id="name" required />
+        </label>
+        <label>
+          メールアドレス
+          <input type="email" id="email" required />
+        </label>
+        <label>
+          補足事項（任意）
+          <textarea id="note" rows="3"></textarea>
+        </label>
+        <button type="submit">選択した候補を送信する</button>
+        <div id="submitResult" class="submit-result" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+
+  <script src="./config.js"></script>
+  <script src="./app.js" type="module"></script>
+</body>
+</html>

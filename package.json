@@ -1,0 +1,17 @@
+{
+  "name": "calendar-availability-proposer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build:pages": "rm -rf docs && mkdir -p docs && cp -R public/. docs/ && touch docs/.nojekyll"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^139.0.0",
+    "nodemailer": "^8.0.1"
+  }
+}

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Generated / local runtime data
+data/proposals.json
+docs/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
