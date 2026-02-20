@@ -270,24 +270,20 @@ button.loading {
     grid-template-columns: 1fr;
   }
 
-  .calendar-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .weekday {
-    display: none;
+  .events-panel {
+    padding-bottom: 6px;
   }
 
   .time-grid {
-    min-width: 620px;
+    min-width: 820px;
   }
 
   .time-grid-row {
-    grid-template-columns: 92px repeat(var(--cols), minmax(32px, 1fr));
+    grid-template-columns: 108px repeat(var(--cols), minmax(44px, 1fr));
   }
 
   .time-cell {
-    min-height: 30px;
+    min-height: 40px;
   }
 
   button,

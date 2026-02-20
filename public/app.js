@@ -27,6 +27,8 @@ let selectedCells = new Set();
 let isDragging = false;
 let dragMode = 'select';
 let dragPointerId = null;
+let dragVisited = new Set();
+let dragChanged = false;
 
 function apiUrl(pathWithQuery) {
   if (!API_BASE_URL) return pathWithQuery;
@@ -178,11 +180,13 @@ function cleanupSelectedCells(slotMinutes, byDay) {
 
 function applyCellSelection(dayKey, startMin) {
   const key = cellKey(dayKey, startMin);
+  const before = selectedCells.has(key);
   if (dragMode === 'select') {
     selectedCells.add(key);
   } else {
     selectedCells.delete(key);
   }
+  return before !== selectedCells.has(key);
 }
 
 function syncCellSelectedClass(cell) {
@@ -325,18 +329,27 @@ function renderTimeGrid() {
           e.preventDefault();
           isDragging = true;
           dragPointerId = e.pointerId;
+          dragVisited = new Set();
+          dragChanged = false;
           dragMode = selectedCells.has(key) ? 'unselect' : 'select';
-          applyCellSelection(dayKey, m);
-          syncCellSelectedClass(cell);
-          renderSelectedSuggestions(slotMinutes);
+          const changed = applyCellSelection(dayKey, m);
+          dragVisited.add(key);
+          if (changed) {
+            dragChanged = true;
+            syncCellSelectedClass(cell);
+          }
         });
 
         cell.addEventListener('pointerenter', (e) => {
           if (!isDragging) return;
           if (dragPointerId !== null && e.pointerId !== dragPointerId) return;
-          applyCellSelection(dayKey, m);
-          syncCellSelectedClass(cell);
-          renderSelectedSuggestions(slotMinutes);
+          if (dragVisited.has(key)) return;
+          const changed = applyCellSelection(dayKey, m);
+          dragVisited.add(key);
+          if (changed) {
+            dragChanged = true;
+            syncCellSelectedClass(cell);
+          }
         });
       }
 
@@ -350,15 +363,39 @@ function renderTimeGrid() {
   renderSelectedSuggestions(slotMinutes);
 }
 
+document.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  if (dragPointerId !== null && e.pointerId !== dragPointerId) return;
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  const cell = target?.closest('.time-cell.available');
+  if (!cell) return;
+
+  const key = cellKey(cell.dataset.dayKey, Number(cell.dataset.startMin));
+  if (dragVisited.has(key)) return;
+  const changed = applyCellSelection(cell.dataset.dayKey, Number(cell.dataset.startMin));
+  dragVisited.add(key);
+  if (changed) {
+    dragChanged = true;
+    syncCellSelectedClass(cell);
+  }
+});
+
 document.addEventListener('pointerup', (e) => {
   if (dragPointerId !== null && e.pointerId !== dragPointerId) return;
+  if (dragChanged) {
+    renderSelectedSuggestions(getSlotMinutes());
+  }
   isDragging = false;
   dragPointerId = null;
+  dragVisited = new Set();
+  dragChanged = false;
 });
 
 document.addEventListener('pointercancel', () => {
   isDragging = false;
   dragPointerId = null;
+  dragVisited = new Set();
+  dragChanged = false;
 });
 
 function parseEventBoundary(value, isAllDay) {
