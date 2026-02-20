@@ -5,6 +5,7 @@
   --text: #2f261d;
   --accent: #9b4d20;
   --muted: #6f6456;
+  --board-width: 1092px;
 }
 
 * { box-sizing: border-box; }
@@ -98,8 +99,8 @@ button.loading {
   display: grid;
   grid-template-columns: repeat(5, 212px);
   gap: 8px;
-  width: 1092px;
-  min-width: 1092px;
+  width: var(--board-width);
+  min-width: var(--board-width);
   margin: 0 auto;
 }
 
@@ -183,20 +184,23 @@ button.loading {
 }
 
 .time-grid-wrap {
-  overflow: auto;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fff;
   padding: 8px;
   user-select: none;
   max-width: 100%;
-  overscroll-behavior-x: contain;
+  width: var(--board-width);
+  min-width: var(--board-width);
+  margin: 0 auto;
 }
 
 .time-grid {
   display: grid;
   gap: 4px;
-  min-width: 760px;
+  width: var(--board-width);
+  min-width: var(--board-width);
 }
 
 .time-grid-row {
@@ -276,7 +280,8 @@ button.loading {
   .panel {
     padding: 14px;
     border-radius: 14px;
-    width: 100%;
+    width: calc(var(--board-width) + 48px);
+    max-width: none;
   }
 
   .grid {
@@ -289,12 +294,13 @@ button.loading {
   }
 
   .calendar-grid {
-    width: 1092px;
-    min-width: 1092px;
+    width: var(--board-width);
+    min-width: var(--board-width);
   }
 
   .time-grid {
-    min-width: 820px;
+    width: var(--board-width);
+    min-width: var(--board-width);
   }
 
   .time-grid-row {
